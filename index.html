@@ -67,8 +67,9 @@
 
   <!-- Main Container -->
   <main class="app-main">
+    <div class="workspace-intro"><h2>Tus pendientes, en un solo lugar</h2><p>Elige quién eres arriba. Usa «Para mí» para ver tus tareas o «Nuevo pendiente» para asignar una.</p></div>
     <!-- Quick Metrics Deck -->
-    <section class="metrics-grid">
+    <details class="summary-disclosure"><summary>Ver resumen de pendientes</summary><section class="metrics-grid">
       <div class="metric-card metric-urgent" data-filter="urgente">
         <div class="metric-icon">🔥</div>
         <div class="metric-info">
@@ -100,7 +101,7 @@
           <span class="metric-label">Ideas Vagas</span>
         </div>
       </div>
-    </section>
+    </section></details>
 
     <!-- Search & Filter Controls -->
     <section class="filter-section">
@@ -109,7 +110,7 @@
           <circle cx="11" cy="11" r="8"/>
           <line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" id="searchInput" placeholder="Buscar por título, contenido o etiqueta...">
+        <input type="search" id="searchInput" aria-label="Buscar pendientes" placeholder="Buscar un pendiente…">
         <button id="btnClearSearch" class="clear-btn" hidden>&times;</button>
       </div>
 
@@ -119,7 +120,8 @@
           <button class="tab-pill active" data-category="ALL">🌟 Todos</button>
           <button class="tab-pill" data-category="Pendientes Urgentes">🚨 Urgentes</button>
           <button class="tab-pill" data-category="Solicitudes de Videos y Media">🎥 Videos & Media</button>
-          <button class="tab-pill" data-category="Ideas Vagas">💡 Ideas Vagas</button>
+          <button class="tab-pill" data-category="Ideas Vagas">💡 Ideas</button>
+          <button class="tab-pill" data-category="Tareas de Gestión">📋 Gestión</button>
           <button class="tab-pill" data-category="MINE">🎯 Para Mí</button>
           <button class="tab-pill" data-category="BYME">📤 Asignados por Mí</button>
         </div>
@@ -134,7 +136,7 @@
           <button class="subfilter-btn" data-status="Listo">✅ Listos</button>
         </div>
         <div class="sort-selector">
-          <label for="sortBySelect" class="sr-only">Ordenar</label>
+          <label for="sortBySelect">Ordenar:</label>
           <select id="sortBySelect">
             <option value="priority">Prioridad (Mayor primero)</option>
             <option value="newest">Más recientes</option>
@@ -160,7 +162,7 @@
       <line x1="12" y1="5" x2="12" y2="19"/>
       <line x1="5" y1="12" x2="19" y2="12"/>
     </svg>
-    <span class="fab-label">Nuevo</span>
+    <span class="fab-label">Nuevo pendiente</span>
   </button>
 
   <!-- MODAL: Crear / Editar Pendiente -->
@@ -187,13 +189,13 @@
 
         <!-- Title -->
         <div class="form-group">
-          <label for="formTitle">Título del pendiente / Solicitud</label>
+          <label for="formTitle">¿Qué hay que hacer?</label>
           <input type="text" id="formTitle" placeholder="Ej: Grabar Reel sobre rutina previa al show..." required>
         </div>
 
         <!-- Description -->
         <div class="form-group">
-          <label for="formDescription">Descripción o pautas detalladas</label>
+          <label for="formDescription">Instrucciones (opcional)</label>
           <textarea id="formDescription" rows="3" placeholder="Puntos clave, formato, tono, especificaciones..."></textarea>
         </div>
 

@@ -1139,6 +1139,23 @@ select option {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.workspace-intro { margin-bottom: 20px; }
+.workspace-intro h2 { font-size: clamp(1.25rem, 4vw, 1.7rem); margin-bottom: 8px; }
+.workspace-intro p { line-height: 1.6; opacity: .75; max-width: 640px; }
+.summary-disclosure { margin-bottom: 20px; }
+.summary-disclosure summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
+.summary-disclosure .metrics-grid { margin-top: 12px; }
+[hidden] { display: none !important; }
+button:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid #818cf8; outline-offset: 4px; }
+.status-step-btn, .subfilter-btn, .tab-pill, .card-action-btn { min-height: 44px; }
+.sort-selector { gap: 8px; }
+@media (max-width: 640px) {
+  .subfilter-bar { align-items: stretch; flex-direction: column; gap: 12px; }
+  .status-filters { display: flex; flex-wrap: wrap; }
+  .fab-label { display: inline !important; }
+  .fab-btn { width: auto; padding-inline: 20px; }
+}
+
 /* Mobile Adjustments */
 @media (max-width: 640px) {
   .toast-container {
