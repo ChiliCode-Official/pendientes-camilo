@@ -13,7 +13,8 @@ const STORAGE_KEYS = {
   LAST_SYNC: 'cg_manager_last_sync'
 };
 
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxjkcKE4ol9C8LhZ1jeG7Zot2U3MLdqNimI6btBQrA2k_pKkGLgv21mgewt3DIqPZw/exec';
+const LEGACY_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxjkcKE4ol9C8LhZ1jeG7Zot2U3MLdqNimI6btBQrA2k_pKkGLgv21mgewt3DIqPZw/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwZMlDciNjm3rdFQJvTHwFiN4Lk9GHGx0ZSzD_5WUA-Et0PheS1XMgRtUQBBlU7djMG/exec';
 
 // Cleans up duplicated or malformed URLs (e.g. accidental double-paste)
 function sanitizeSheetsUrl(url) {
@@ -121,7 +122,8 @@ function loadStoredPreferences() {
   updateRoleIcon();
 
   const savedUrl = localStorage.getItem(STORAGE_KEYS.SHEETS_URL);
-  const effectiveUrl = sanitizeSheetsUrl(savedUrl) || DEFAULT_SHEETS_URL;
+  const normalizedUrl = sanitizeSheetsUrl(savedUrl);
+  const effectiveUrl = !normalizedUrl || normalizedUrl === LEGACY_SHEETS_URL ? DEFAULT_SHEETS_URL : normalizedUrl;
   state.sheetsUrl = effectiveUrl;
   localStorage.setItem(STORAGE_KEYS.SHEETS_URL, effectiveUrl);
   els.sheetsScriptUrl.value = effectiveUrl;
