@@ -492,7 +492,7 @@ async function handleTaskFormSubmit(e) {
     showToast('Pendiente actualizado', 'success');
   } else {
     state.tasks.unshift(taskData);
-    showToast('Nuevo pendiente guardado', 'success');
+    showToast('Guardado localmente; enviando a Sheets…', 'info');
   }
 
   persistTasksLocal();
@@ -556,6 +556,15 @@ async function handleDeleteTask(taskId) {
 // Google Sheets Sync
 async function sendToSheets(payload) {
   if (!state.sheetsUrl) return null;
+  if (payload.action === 'batchSync') {
+    for (const item of payload.items) await sendToSheets({ action: 'saveItem', item });
+    return { success: true };
+  }
+  const validate = data => {
+    if (!data || data.success !== true || !data.result) throw new Error(data?.error || 'El servidor no confirmó la operación. Actualiza Apps Script.');
+    if (data.result.action === 'not_found') throw new Error('La tarea no existe en Sheets');
+    return data;
+  };
   const cleanUrl = sanitizeSheetsUrl(state.sheetsUrl);
 
   try {
@@ -564,7 +573,7 @@ async function sendToSheets(payload) {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload)
     });
-    return await res.json();
+    return validate(await res.json());
   } catch (postErr) {
     console.warn('POST a Google Sheets falló, intentando alternativa GET:', postErr);
     let getUrl = `${cleanUrl}?action=${encodeURIComponent(payload.action)}`;
@@ -576,7 +585,7 @@ async function sendToSheets(payload) {
       getUrl += `&id=${encodeURIComponent(payload.id)}`;
     }
     const getRes = await fetch(getUrl);
-    return await getRes.json();
+    return validate(await getRes.json());
   }
 }
 
@@ -588,9 +597,11 @@ async function syncSingleTaskToSheets(task) {
       action: 'saveItem',
       item: task
     });
+    showToast('Guardado confirmado en Google Sheets', 'success');
     updateSyncStatus();
   } catch (err) {
     console.error('Error guardando en Google Sheets:', err);
+    showToast('Guardado solo en este dispositivo. Sheets falló: ' + err.message, 'error');
     updateSyncStatus();
   }
 }

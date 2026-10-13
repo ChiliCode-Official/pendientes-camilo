@@ -58,7 +58,7 @@ function getOrCreateSheet() {
 
 function migrateOldHeaders(sheet) {
   const currentHeaders = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), HEADERS.length)).getValues()[0];
-  const oldLinkIndex = currentHeaders.indexOf('linkMedia');
+  const oldLinkIndex = currentHeaders.indexOf('linkMedia') !== -1 ? currentHeaders.indexOf('linkMedia') : currentHeaders.indexOf('linkReferencia');
 
   // Versiones anteriores tenían linkMedia en J. Insertamos linkEntrega en K.
   if (oldLinkIndex !== -1 && currentHeaders.indexOf('linkEntrega') === -1) {
@@ -80,7 +80,7 @@ function doGet(e) {
     // Soporte para operaciones por GET (máxima compatibilidad sin problemas de CORS)
     if (action === 'saveItem' && (e.parameter.item || e.parameter.data)) {
       const raw = e.parameter.item || e.parameter.data;
-      const item = JSON.parse(decodeURIComponent(raw));
+      const item = JSON.parse(raw);
       const result = saveOrUpdateItem(item);
       return jsonResponse({ success: true, result: result });
     }
@@ -100,7 +100,7 @@ function doGet(e) {
       return jsonResponse({ success: true, data: items });
     }
 
-    return jsonResponse({ success: true, data: getAllItems() });
+    return jsonResponse({ success: false, error: 'Acción no reconocida: ' + action });
   } catch (error) {
     return jsonResponse({ success: false, error: error.toString() });
   }
