@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Pendientes | Camilo Guerra & Manager</title>
+  
+  <!-- PWA & Mobile Meta Tags -->
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pendientes CG">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/png" href="./icons/favicon.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- Top App Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-group">
+        <div class="brand-avatar">CG</div>
+        <div>
+          <h1 class="brand-title">Camilo & Manager</h1>
+          <div class="sync-status" id="syncStatusBadge" title="Estado de sincronización">
+            <span class="status-dot"></span>
+            <span class="status-text" id="syncStatusText">Conectando...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <!-- Identity Selector -->
+        <div class="role-selector" title="Cambiar usuario activo">
+          <label for="activeUserSelect" class="sr-only">Usuario Activo</label>
+          <span class="role-icon" id="currentRoleIcon">👔</span>
+          <select id="activeUserSelect">
+            <option value="Manager">Soy Manager</option>
+            <option value="Camilo Guerra">Soy Camilo</option>
+          </select>
+        </div>
+
+        <!-- Sync Button -->
+        <button id="btnManualSync" class="icon-btn" title="Sincronizar con Google Sheets">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+
+        <!-- Settings Button -->
+        <button id="btnOpenSettings" class="icon-btn" title="Configuración de Google Sheets">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-main">
+    <!-- Quick Metrics Deck -->
+    <section class="metrics-grid">
+      <div class="metric-card metric-urgent" data-filter="urgente">
+        <div class="metric-icon">🔥</div>
+        <div class="metric-info">
+          <span class="metric-value" id="countUrgent">0</span>
+          <span class="metric-label">Urgentes</span>
+        </div>
+      </div>
+
+      <div class="metric-card metric-media" data-filter="media">
+        <div class="metric-icon">🎬</div>
+        <div class="metric-info">
+          <span class="metric-value" id="countMedia">0</span>
+          <span class="metric-label">Videos & Media</span>
+        </div>
+      </div>
+
+      <div class="metric-card metric-mine" data-filter="mine">
+        <div class="metric-icon">👤</div>
+        <div class="metric-info">
+          <span class="metric-value" id="countMine">0</span>
+          <span class="metric-label">Asignados a Mí</span>
+        </div>
+      </div>
+
+      <div class="metric-card metric-ideas" data-filter="ideas">
+        <div class="metric-icon">💡</div>
+        <div class="metric-info">
+          <span class="metric-value" id="countIdeas">0</span>
+          <span class="metric-label">Ideas Vagas</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Search & Filter Controls -->
+    <section class="filter-section">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Buscar por título, contenido o etiqueta...">
+        <button id="btnClearSearch" class="clear-btn" hidden>&times;</button>
+      </div>
+
+      <!-- Categories Pills Tabs -->
+      <div class="category-tabs-wrapper">
+        <div class="category-tabs" id="categoryTabs">
+          <button class="tab-pill active" data-category="ALL">🌟 Todos</button>
+          <button class="tab-pill" data-category="Pendientes Urgentes">🚨 Urgentes</button>
+          <button class="tab-pill" data-category="Solicitudes de Videos y Media">🎥 Videos & Media</button>
+          <button class="tab-pill" data-category="Ideas Vagas">💡 Ideas Vagas</button>
+          <button class="tab-pill" data-category="MINE">🎯 Para Mí</button>
+          <button class="tab-pill" data-category="BYME">📤 Asignados por Mí</button>
+        </div>
+      </div>
+
+      <!-- Secondary Filters Bar -->
+      <div class="subfilter-bar">
+        <div class="status-filters" id="statusFilters">
+          <button class="subfilter-btn active" data-status="ALL">Todos los Estados</button>
+          <button class="subfilter-btn" data-status="Pendiente">⏳ Pendientes</button>
+          <button class="subfilter-btn" data-status="En Proceso">⚡ En Proceso</button>
+          <button class="subfilter-btn" data-status="Listo">✅ Listos</button>
+        </div>
+        <div class="sort-selector">
+          <label for="sortBySelect" class="sr-only">Ordenar</label>
+          <select id="sortBySelect">
+            <option value="priority">Prioridad (Mayor primero)</option>
+            <option value="newest">Más recientes</option>
+            <option value="deadline">Fecha límite próxima</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Task List Feed -->
+    <section class="task-feed" id="taskFeedContainer">
+      <!-- Items dynamically injected here -->
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <p>Cargando pendientes...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Floating Add Button (Mobile-First Ergonomic FAB) -->
+  <button id="btnOpenNewTaskModal" class="fab-btn" title="Nuevo Pendiente o Solicitud">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    <span class="fab-label">Nuevo</span>
+  </button>
+
+  <!-- MODAL: Crear / Editar Pendiente -->
+  <div class="modal-backdrop" id="taskModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 class="modal-title" id="taskModalTitle">Nuevo Pendiente</h2>
+        <button class="modal-close-btn" id="btnCloseTaskModal">&times;</button>
+      </div>
+
+      <form id="taskForm" class="modal-form">
+        <input type="hidden" id="formTaskId">
+
+        <!-- Category -->
+        <div class="form-group">
+          <label for="formCategory">Categoría</label>
+          <select id="formCategory" required>
+            <option value="Pendientes Urgentes">🚨 Pendientes Urgentes</option>
+            <option value="Solicitudes de Videos y Media">🎥 Solicitud de Videos y Media (Camilo)</option>
+            <option value="Ideas Vagas">💡 Ideas Vagas / Brainstorming</option>
+            <option value="Tareas de Gestión">📋 Tareas de Gestión / Manager</option>
+          </select>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group">
+          <label for="formTitle">Título del pendiente / Solicitud</label>
+          <input type="text" id="formTitle" placeholder="Ej: Grabar Reel sobre rutina previa al show..." required>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="formDescription">Descripción o pautas detalladas</label>
+          <textarea id="formDescription" rows="3" placeholder="Puntos clave, formato, tono, especificaciones..."></textarea>
+        </div>
+
+        <!-- Assignment & Priority Grid -->
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="formAssignee">Asignado a</label>
+            <select id="formAssignee" required>
+              <option value="Camilo Guerra">Camilo Guerra</option>
+              <option value="Manager">Manager</option>
+            </select>
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="formPriority">Prioridad</label>
+            <select id="formPriority" required>
+              <option value="Alta">🔴 Alta / Urgente</option>
+              <option value="Media" selected>🟡 Media</option>
+              <option value="Baja">🟢 Baja / Tranqui</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Media Link / Reference -->
+        <div class="form-group">
+          <label for="formMediaLink">
+            Enlace de referencia o entrega (Drive, TikTok, Reel, etc.)
+          </label>
+          <input type="url" id="formMediaLink" placeholder="https://drive.google.com/... o https://instagram.com/...">
+        </div>
+
+        <!-- Deadline & Status Grid -->
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="formDeadline">Fecha Límite</label>
+            <input type="date" id="formDeadline">
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="formStatus">Estado</label>
+            <select id="formStatus">
+              <option value="Pendiente" selected>⏳ Pendiente</option>
+              <option value="En Proceso">⚡ En Proceso</option>
+              <option value="Listo">✅ Listo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btnCancelTaskModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveTask">
+            <span class="btn-spinner" hidden></span>
+            <span>Guardar Pendiente</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Configuración & Google Sheets Backend -->
+  <div class="modal-backdrop" id="settingsModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h2 class="modal-title">Configuración de Google Sheets</h2>
+        <button class="modal-close-btn" id="btnCloseSettingsModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="settings-helper">
+          Conecta esta PWA con tu hoja de cálculo de Google Sheets a través de Google Apps Script para sincronizar las tareas en tiempo real entre ambos.
+        </p>
+
+        <div class="form-group">
+          <label for="sheetsScriptUrl">URL de la Aplicación Web (Apps Script)</label>
+          <input type="url" id="sheetsScriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+          <small class="input-hint">Pega aquí el enlace terminado en <code>/exec</code> que obtuviste al Implementar en Apps Script.</small>
+        </div>
+
+        <div class="settings-actions">
+          <button type="button" class="btn btn-secondary" id="btnTestConnection">
+            🔗 Probar Conexión
+          </button>
+          <button type="button" class="btn btn-primary" id="btnSaveSettings">
+            💾 Guardar Configuración
+          </button>
+        </div>
+
+        <hr class="divider">
+
+        <h3 class="section-subtitle">Gestión de Datos Locales</h3>
+        <div class="backup-actions">
+          <button type="button" class="btn btn-outline" id="btnLoadDemoData">
+            ✨ Cargar Datos de Demostración
+          </button>
+          <button type="button" class="btn btn-outline" id="btnExportJson">
+            📥 Descargar Copia JSON
+          </button>
+          <button type="button" class="btn btn-danger-outline" id="btnClearAllData">
+            🗑️ Vaciar Datos Locales
+          </button>
+        </div>
+
+        <hr class="divider">
+
+        <div class="guide-box">
+          <h4>💡 ¿Cómo obtener la URL de Google Sheets?</h4>
+          <ol>
+            <li>Abre tu hoja en Google Sheets.</li>
+            <li>Ve a <strong>Extensiones &gt; Apps Script</strong> y pega el código de <code>google-apps-script.js</code>.</li>
+            <li>Haz clic en <strong>Implementar &gt; Nueva implementación</strong>.</li>
+            <li>Selecciona tipo <strong>Aplicación web</strong>, Ejecutar como: <em>Yo</em>, Acceso: <em>Cualquiera</em>.</li>
+            <li>Copia la URL resultante y pégala aquí.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
