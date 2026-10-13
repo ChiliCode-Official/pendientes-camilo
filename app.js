@@ -5,7 +5,7 @@
  * ==============================================================================
  */
 
-// Storage Keys
+// Storage Keys & Constants
 const STORAGE_KEYS = {
   TASKS: 'cg_manager_tasks_v1',
   ACTIVE_USER: 'cg_manager_active_user',
@@ -13,71 +13,20 @@ const STORAGE_KEYS = {
   LAST_SYNC: 'cg_manager_last_sync'
 };
 
-// Initial Seed / Demo Data (Reflects real workflow between talent & manager)
-const INITIAL_DEMO_TASKS = [
-  {
-    id: 'task-1',
-    fechaCreacion: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
-    creador: 'Manager',
-    asignadoA: 'Camilo Guerra',
-    categoria: 'Pendientes Urgentes',
-    titulo: 'Confirmar setlist definitivo para show del fin de semana',
-    descripcion: 'Necesitamos el orden exacto de temas para enviar las secuencias al sonidista antes del jueves.',
-    prioridad: 'Alta',
-    estado: 'Pendiente',
-    linkMedia: '',
-    fechaLimite: new Date(Date.now() + 3600000 * 24 * 1).toISOString().split('T')[0],
-    ultimaModificacion: new Date().toISOString()
-  },
-  {
-    id: 'task-2',
-    fechaCreacion: new Date(Date.now() - 3600000 * 12).toISOString(),
-    creador: 'Manager',
-    asignadoA: 'Camilo Guerra',
-    categoria: 'Solicitudes de Videos y Media',
-    titulo: 'Grabar Reel / TikTok: Anuncio de nueva fecha o sorpresa',
-    descripcion: 'Hook inicial de 3 seg mirando a cámara: "No les había contado esto pero...". Dejar 15-20 seg para interacción con seguidores.',
-    prioridad: 'Alta',
-    estado: 'En Proceso',
-    linkMedia: 'https://www.instagram.com',
-    fechaLimite: new Date(Date.now() + 3600000 * 24 * 2).toISOString().split('T')[0],
-    ultimaModificacion: new Date().toISOString()
-  },
-  {
-    id: 'task-3',
-    fechaCreacion: new Date(Date.now() - 3600000 * 48).toISOString(),
-    creador: 'Camilo Guerra',
-    asignadoA: 'Manager',
-    categoria: 'Tareas de Gestión',
-    titulo: 'Cotizar estudio de grabación acústico para live sessions',
-    descripcion: 'Buscar 2 o 3 opciones con buen tratamiento acústico y disponibilidad para grabar 3 canciones en formato íntimo.',
-    prioridad: 'Media',
-    estado: 'Pendiente',
-    linkMedia: '',
-    fechaLimite: new Date(Date.now() + 3600000 * 24 * 4).toISOString().split('T')[0],
-    ultimaModificacion: new Date().toISOString()
-  },
-  {
-    id: 'task-4',
-    fechaCreacion: new Date(Date.now() - 3600000 * 6).toISOString(),
-    creador: 'Camilo Guerra',
-    asignadoA: 'Camilo Guerra',
-    categoria: 'Ideas Vagas',
-    titulo: 'Concepto de merch retro / vintage con temática de canciones',
-    descripcion: 'Remeras oversize con diseño desgastado y frases clave. Probar bocetos rápidos.',
-    prioridad: 'Baja',
-    estado: 'Pendiente',
-    linkMedia: 'https://pinterest.com',
-    fechaLimite: '',
-    ultimaModificacion: new Date().toISOString()
-  }
-];
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxjkcKE4ol9C8LhZ1jeG7Zot2U3MLdqNimI6btBQrA2k_pKkGLgv21mgewt3DIqPZw/exec';
 
-// App State
+// Cleans up duplicated or malformed URLs (e.g. accidental double-paste)
+function sanitizeSheetsUrl(url) {
+  if (!url) return '';
+  const match = String(url).match(/https:\/\/script\.google\.com\/macros\/s\/[a-zA-Z0-9_\-]+\/exec/);
+  return match ? match[0] : String(url).trim();
+}
+
+// App State (Starts completely empty as requested)
 const state = {
   tasks: [],
   activeUser: 'Manager', // 'Manager' or 'Camilo Guerra'
-  sheetsUrl: '',
+  sheetsUrl: DEFAULT_SHEETS_URL,
   selectedCategory: 'ALL',
   selectedStatus: 'ALL',
   searchQuery: '',
@@ -126,7 +75,9 @@ const els = {
   formDescription: document.getElementById('formDescription'),
   formAssignee: document.getElementById('formAssignee'),
   formPriority: document.getElementById('formPriority'),
-  formMediaLink: document.getElementById('formMediaLink'),
+  formReferenceLink: document.getElementById('formReferenceLink'),
+  formDeliveryLink: document.getElementById('formDeliveryLink'),
+  deliveryLinkGroup: document.getElementById('deliveryLinkGroup'),
   formDeadline: document.getElementById('formDeadline'),
   formStatus: document.getElementById('formStatus'),
   btnSaveTask: document.getElementById('btnSaveTask'),
@@ -170,25 +121,29 @@ function loadStoredPreferences() {
   updateRoleIcon();
 
   const savedUrl = localStorage.getItem(STORAGE_KEYS.SHEETS_URL);
-  if (savedUrl) {
-    state.sheetsUrl = savedUrl;
-    els.sheetsScriptUrl.value = savedUrl;
-  }
+  const effectiveUrl = sanitizeSheetsUrl(savedUrl) || DEFAULT_SHEETS_URL;
+  state.sheetsUrl = effectiveUrl;
+  localStorage.setItem(STORAGE_KEYS.SHEETS_URL, effectiveUrl);
+  els.sheetsScriptUrl.value = effectiveUrl;
 }
 
 function loadTasks() {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.TASKS);
     if (raw) {
-      state.tasks = JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      // Filtrar tareas demo mock si quedaron de la versión anterior
+      state.tasks = Array.isArray(parsed)
+        ? parsed.filter(t => !['task-1', 'task-2', 'task-3', 'task-4'].includes(t.id))
+        : [];
     } else {
-      state.tasks = [...INITIAL_DEMO_TASKS];
-      persistTasksLocal();
+      state.tasks = [];
     }
   } catch (err) {
     console.error('Error loading tasks:', err);
-    state.tasks = [...INITIAL_DEMO_TASKS];
+    state.tasks = [];
   }
+  persistTasksLocal();
 }
 
 function persistTasksLocal() {
@@ -345,6 +300,7 @@ function setupEventListeners() {
 
   // Task Form Submit
   els.taskForm.addEventListener('submit', handleTaskFormSubmit);
+  els.formStatus.addEventListener('change', updateDeliveryLinkVisibility);
 
   // Search input
   els.searchInput.addEventListener('input', (e) => {
@@ -471,6 +427,9 @@ function openTaskModalForCreate() {
 
   els.formPriority.value = 'Media';
   els.formStatus.value = 'Pendiente';
+  els.formReferenceLink.value = '';
+  els.formDeliveryLink.value = '';
+  updateDeliveryLinkVisibility();
   openModal(els.taskModal);
   els.formTitle.focus();
 }
@@ -484,11 +443,19 @@ function openTaskModalForEdit(task) {
   els.formDescription.value = task.descripcion || '';
   els.formAssignee.value = task.asignadoA || 'Camilo Guerra';
   els.formPriority.value = task.prioridad || 'Media';
-  els.formMediaLink.value = task.linkMedia || '';
+  els.formReferenceLink.value = task.linkReferencia || task.linkMedia || '';
+  els.formDeliveryLink.value = task.linkEntrega || '';
   els.formDeadline.value = task.fechaLimite || '';
   els.formStatus.value = task.estado || 'Pendiente';
+  updateDeliveryLinkVisibility();
   
   openModal(els.taskModal);
+}
+
+function updateDeliveryLinkVisibility() {
+  const shouldShow = els.formStatus.value === 'En Proceso' || els.formStatus.value === 'Listo';
+  els.deliveryLinkGroup.hidden = !shouldShow;
+  els.formDeliveryLink.disabled = !shouldShow;
 }
 
 // Handle Form Submit
@@ -510,8 +477,9 @@ async function handleTaskFormSubmit(e) {
     titulo: els.formTitle.value.trim(),
     descripcion: els.formDescription.value.trim(),
     prioridad: els.formPriority.value,
-    estado: els.formStatus.value,
-    linkMedia: els.formMediaLink.value.trim(),
+    estado: isEditing ? els.formStatus.value : 'Pendiente',
+    linkReferencia: els.formReferenceLink.value.trim(),
+    linkEntrega: els.formDeliveryLink.value.trim(),
     fechaLimite: els.formDeadline.value,
     ultimaModificacion: new Date().toISOString()
   };
@@ -557,19 +525,11 @@ async function handleStatusChange(taskId, newStatus) {
   }
 
   if (state.sheetsUrl) {
-    try {
-      await fetch(state.sheetsUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'updateStatus',
-          id: taskId,
-          estado: newStatus
-        })
-      });
-    } catch (err) {
-      console.warn('Sync status pending offline:', err);
-    }
+    sendToSheets({
+      action: 'updateStatus',
+      id: taskId,
+      estado: newStatus
+    }).catch(err => console.warn('Sync status pending offline:', err));
   }
 }
 
@@ -586,37 +546,51 @@ async function handleDeleteTask(taskId) {
   showToast('Pendiente eliminado', 'info');
 
   if (state.sheetsUrl) {
-    try {
-      await fetch(state.sheetsUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'deleteItem',
-          id: taskId
-        })
-      });
-    } catch (err) {
-      console.warn('Sync delete pending offline:', err);
-    }
+    sendToSheets({
+      action: 'deleteItem',
+      id: taskId
+    }).catch(err => console.warn('Sync delete pending offline:', err));
   }
 }
 
 // Google Sheets Sync
+async function sendToSheets(payload) {
+  if (!state.sheetsUrl) return null;
+  const cleanUrl = sanitizeSheetsUrl(state.sheetsUrl);
+
+  try {
+    const res = await fetch(cleanUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  } catch (postErr) {
+    console.warn('POST a Google Sheets falló, intentando alternativa GET:', postErr);
+    let getUrl = `${cleanUrl}?action=${encodeURIComponent(payload.action)}`;
+    if (payload.action === 'saveItem' && payload.item) {
+      getUrl += `&item=${encodeURIComponent(JSON.stringify(payload.item))}`;
+    } else if (payload.action === 'updateStatus') {
+      getUrl += `&id=${encodeURIComponent(payload.id)}&estado=${encodeURIComponent(payload.estado)}`;
+    } else if (payload.action === 'deleteItem') {
+      getUrl += `&id=${encodeURIComponent(payload.id)}`;
+    }
+    const getRes = await fetch(getUrl);
+    return await getRes.json();
+  }
+}
+
 async function syncSingleTaskToSheets(task) {
   if (!state.sheetsUrl) return;
   try {
     updateSyncStatus('syncing');
-    await fetch(state.sheetsUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action: 'saveItem',
-        item: task
-      })
+    await sendToSheets({
+      action: 'saveItem',
+      item: task
     });
     updateSyncStatus();
   } catch (err) {
-    console.error('Error saving single task to Sheets:', err);
+    console.error('Error guardando en Google Sheets:', err);
     updateSyncStatus();
   }
 }
@@ -635,12 +609,14 @@ async function syncWithGoogleSheets(userInitiated = false) {
     return;
   }
 
+  const cleanUrl = sanitizeSheetsUrl(state.sheetsUrl);
+
   try {
     state.isSyncing = true;
     updateSyncStatus('syncing');
 
-    // 1. Fetch remote items via GET or POST
-    const response = await fetch(`${state.sheetsUrl}?action=getItems`, {
+    // 1. Fetch remote items via GET
+    const response = await fetch(`${cleanUrl}?action=getItems`, {
       method: 'GET',
       headers: { 'Accept': 'application/json' }
     });
@@ -686,13 +662,9 @@ async function syncWithGoogleSheets(userInitiated = false) {
 
       // If local had unsynced new items, batch send them to Google Sheets
       if (pendingPushToRemote.length > 0) {
-        await fetch(state.sheetsUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action: 'batchSync',
-            items: pendingPushToRemote
-          })
+        await sendToSheets({
+          action: 'batchSync',
+          items: pendingPushToRemote
         });
       }
 
@@ -716,7 +688,8 @@ async function syncWithGoogleSheets(userInitiated = false) {
 
 // Settings Handlers
 function handleSaveSettings() {
-  const url = els.sheetsScriptUrl.value.trim();
+  const url = sanitizeSheetsUrl(els.sheetsScriptUrl.value);
+  els.sheetsScriptUrl.value = url;
   state.sheetsUrl = url;
   localStorage.setItem(STORAGE_KEYS.SHEETS_URL, url);
   updateSyncStatus();
@@ -729,9 +702,12 @@ function handleSaveSettings() {
 }
 
 async function handleTestConnection() {
-  const url = els.sheetsScriptUrl.value.trim();
+  const rawUrl = els.sheetsScriptUrl.value.trim();
+  const url = sanitizeSheetsUrl(rawUrl);
+  els.sheetsScriptUrl.value = url;
+
   if (!url) {
-    alert('Ingresa una URL de Apps Script primero');
+    alert('Ingresa una URL válida de Apps Script (debe terminar en /exec)');
     return;
   }
 
@@ -745,7 +721,7 @@ async function handleTestConnection() {
     if (json && json.success) {
       alert(`✅ ¡Conexión Exitosa!\nFilas leídas de Google Sheets: ${json.data ? json.data.length : 0}`);
     } else {
-      alert(`⚠️ Respuesta recibida pero con error: ${json.error || 'Desconocido'}`);
+      alert(`⚠️ Respuesta recibida pero con aviso del script: ${json.error || 'Desconocido'}\n\nSi dice "getLastRowNum is not a function", actualiza la implementación en Apps Script a una Nueva Versión.`);
     }
   } catch (err) {
     alert(`❌ No se pudo conectar a Google Sheets.\nMotivo: ${err.message}\n\nAsegúrate de que la implementación en Apps Script esté configurada con Acceso: "Cualquiera" (Anyone).`);
@@ -892,15 +868,16 @@ function createTaskCardElement(task) {
 
   // Media Link
   let mediaLinkHtml = '';
-  if (task.linkMedia) {
-    let cleanUrl = task.linkMedia;
+  const referenceLink = task.linkReferencia || task.linkMedia;
+  if (referenceLink) {
+    let cleanUrl = referenceLink;
     try {
-      const parsed = new URL(task.linkMedia);
+      const parsed = new URL(referenceLink);
       cleanUrl = parsed.hostname + parsed.pathname;
     } catch (e) {}
 
     mediaLinkHtml = `
-      <a href="${task.linkMedia}" target="_blank" rel="noopener noreferrer" class="media-link-card" title="Abrir material o referencia">
+      <a href="${referenceLink}" target="_blank" rel="noopener noreferrer" class="media-link-card" title="Abrir enlace de referencia">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
@@ -908,6 +885,10 @@ function createTaskCardElement(task) {
         <span>${cleanUrl}</span>
       </a>
     `;
+  }
+
+  if (task.linkEntrega) {
+    mediaLinkHtml += `<a href="${task.linkEntrega}" target="_blank" rel="noopener noreferrer" class="media-link-card" title="Abrir entrega">✅ Entrega: ${escapeHtml(task.linkEntrega)}</a>`;
   }
 
   // Assigned me badge highlight

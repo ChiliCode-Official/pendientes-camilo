@@ -217,12 +217,16 @@
           </div>
         </div>
 
-        <!-- Media Link / Reference -->
+        <!-- Reference Link -->
         <div class="form-group">
-          <label for="formMediaLink">
-            Enlace de referencia o entrega (Drive, TikTok, Reel, etc.)
-          </label>
-          <input type="url" id="formMediaLink" placeholder="https://drive.google.com/... o https://instagram.com/...">
+          <label for="formReferenceLink">Enlace de referencia <span class="field-hint">(opcional)</span></label>
+          <input type="url" id="formReferenceLink" placeholder="Ejemplo, inspiración o instrucciones: https://...">
+        </div>
+
+        <!-- Delivery Link -->
+        <div class="form-group delivery-link-group" id="deliveryLinkGroup" hidden>
+          <label for="formDeliveryLink">Enlace de entrega <span class="field-hint">(solo cuando exista el resultado)</span></label>
+          <input type="url" id="formDeliveryLink" placeholder="Archivo final o publicación: https://...">
         </div>
 
         <!-- Deadline & Status Grid -->
